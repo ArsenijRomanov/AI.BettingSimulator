@@ -1,6 +1,7 @@
 using SportsBook.Pricing.Abstractions;
 using SportsBook.Pricing.Constants;
 using SportsBook.Pricing.Enums;
+using SportsBook.Pricing.Exceptions;
 using SportsBook.Pricing.Markets;
 using SportsBook.Pricing.ValueObjects;
 
@@ -33,12 +34,18 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
         ArgumentNullException.ThrowIfNull(totalMarket);
 
         if (totalMarket.Type != MarketType.Total)
-            throw new ArgumentException("Total market is required.", nameof(totalMarket));
+        {
+            throw new PricingException(
+                PricingErrorCodes.InvalidSourceMarket,
+                "Total market is required.");
+        }
 
         var (targetOverProbability, _) = Demargin(totalMarket);
         var threshold = (int)Math.Floor(totalMarket.Base.Value);
 
-        var lambda = Math.Max(MinLambda, totalMarket.Base.Value + 0.5d);
+        var lambda = Math.Max(
+            MinLambda,
+            totalMarket.Base.Value + 0.5d);
 
         for (var i = 0; i < MaxIterations; i++)
         {
@@ -56,7 +63,11 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
                 .Value;
 
             if (derivative <= 0d)
-                throw new InvalidOperationException("Newton derivative is too small.");
+            {
+                throw new PricingException(
+                    PricingErrorCodes.LambdaCalculationFailed,
+                    "Newton derivative is too small.");
+            }
 
             lambda -= functionValue / derivative;
 
@@ -64,7 +75,9 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
                 lambda = MinLambda;
         }
 
-        return lambda;
+        throw new PricingException(
+            PricingErrorCodes.LambdaCalculationFailed,
+            "Total lambda calculation did not converge.");
     }
 
     /// <inheritdoc />
@@ -79,17 +92,20 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
         ArgumentNullException.ThrowIfNull(handicapMarket);
 
         if (handicapMarket.Type != MarketType.Handicap)
-            throw new ArgumentException("Handicap market is required.", nameof(handicapMarket));
+        {
+            throw new PricingException(
+                PricingErrorCodes.InvalidSourceMarket,
+                "Handicap market is required.");
+        }
 
         var (targetHomeProbability, _) = Demargin(handicapMarket);
 
         var left = MinShare;
         var right = MaxShare;
-        var middle = 0.5d;
 
         for (var i = 0; i < MaxIterations; i++)
         {
-            middle = (left + right) / 2d;
+            var middle = (left + right) / 2d;
 
             var homeLambda = totalLambda * middle;
             var awayLambda = totalLambda * (1d - middle);
@@ -102,7 +118,11 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
             var difference = homeHandicapProbability - targetHomeProbability.Value;
 
             if (Math.Abs(difference) <= Tolerance)
-                break;
+            {
+                return (
+                    Home: homeLambda,
+                    Away: awayLambda);
+            }
 
             if (homeHandicapProbability < targetHomeProbability.Value)
                 left = middle;
@@ -110,9 +130,9 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
                 right = middle;
         }
 
-        return (
-            Home: totalLambda * middle,
-            Away: totalLambda * (1d - middle));
+        throw new PricingException(
+            PricingErrorCodes.LambdaCalculationFailed,
+            "Lambda pair calculation did not converge.");
     }
 
     /// <summary>
@@ -125,13 +145,19 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
         ArgumentNullException.ThrowIfNull(market);
 
         if (market.Selections.Count != 2)
-            throw new ArgumentException("Market must contain exactly two selections.", nameof(market));
+        {
+            throw new PricingException(
+                PricingErrorCodes.InvalidSourceMarket,
+                "Market must contain exactly two selections.");
+        }
 
         var (firstCode, secondCode) = market.Type switch
         {
             MarketType.Total => (SelectionCode.Over, SelectionCode.Under),
             MarketType.Handicap => (SelectionCode.Home, SelectionCode.Away),
-            _ => throw new ArgumentException("Market type is not supported for demargin.", nameof(market))
+            _ => throw new PricingException(
+                PricingErrorCodes.UnsupportedMarketType,
+                "Market type is not supported for demargin.")
         };
 
         var first = GetSelection(market, firstCode);
@@ -142,7 +168,12 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
 
         var impliedProbabilitySum = firstImpliedProbability + secondImpliedProbability;
 
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(impliedProbabilitySum, 0d);
+        if (impliedProbabilitySum <= 0d)
+        {
+            throw new PricingException(
+                PricingErrorCodes.InvalidSourceMarket,
+                "Market implied probability sum must be greater than zero.");
+        }
 
         return (
             First: new Probability(firstImpliedProbability / impliedProbabilitySum),
@@ -161,14 +192,18 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
                 continue;
 
             if (result is not null)
-                throw new ArgumentException($"Selection {code} is duplicated.", nameof(market));
+            {
+                throw new PricingException(
+                    PricingErrorCodes.InvalidSourceMarket,
+                    $"Selection {code} is duplicated.");
+            }
 
             result = selection;
         }
 
-        return result ?? throw new ArgumentException(
-            $"Selection {code} was not found.",
-            nameof(market));
+        return result ?? throw new PricingException(
+            PricingErrorCodes.InvalidSourceMarket,
+            $"Selection {code} was not found.");
     }
 
     /// <summary>

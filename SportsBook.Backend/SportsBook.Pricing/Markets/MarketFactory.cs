@@ -1,4 +1,5 @@
 using SportsBook.Pricing.Enums;
+using SportsBook.Pricing.Exceptions;
 using SportsBook.Pricing.ValueObjects;
 
 namespace SportsBook.Pricing.Markets;
@@ -169,10 +170,16 @@ internal static class MarketFactory
 
         var bookmakerProbability = probability.Value * (1d + margin);
 
-        bookmakerProbability = Math.Clamp(
+        if (bookmakerProbability >= 1d)
+        {
+            throw new PricingException(
+                PricingErrorCodes.MarginTooHigh,
+                "Margin is too high for this probability.");
+        }
+
+        bookmakerProbability = Math.Max(
             bookmakerProbability,
-            MinOddsProbability,
-            1d - MinOddsProbability);
+            MinOddsProbability);
 
         return new Odds(1d / bookmakerProbability);
     }

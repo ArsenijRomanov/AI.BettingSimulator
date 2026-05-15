@@ -1,5 +1,6 @@
 using SportsBook.Pricing.Abstractions;
 using SportsBook.Pricing.Constants;
+using SportsBook.Pricing.Exceptions;
 using SportsBook.Pricing.Markets;
 using SportsBook.Pricing.ValueObjects;
 
@@ -82,12 +83,21 @@ public sealed class MarketGenerator
         MarketBase marketBase,
         double margin = 0d)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(marketBase.Value, 0d);
+        if (marketBase.Value < 0d)
+        {
+            throw new PricingException(
+                PricingErrorCodes.MarketBaseOutOfMatrix,
+                "Total base is out of score matrix.");
+        }
 
         var maxTotalScore = PricingMathConstants.MaxScore * 2;
 
         if (marketBase.Value > maxTotalScore)
-            throw new ArgumentOutOfRangeException(nameof(marketBase), "Total base exceeds score matrix size.");
+        {
+            throw new PricingException(
+                PricingErrorCodes.MarketBaseOutOfMatrix,
+                "Total base exceeds score matrix size.");
+        }
 
         var threshold = (int)Math.Floor(marketBase.Value);
         var under = 0d;
@@ -116,10 +126,19 @@ public sealed class MarketGenerator
         MarketBase marketBase,
         double margin = 0d)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(marketBase.Value, 0d);
+        if (marketBase.Value < 0d)
+        {
+            throw new PricingException(
+                PricingErrorCodes.MarketBaseOutOfMatrix,
+                "Home total base is out of score matrix.");
+        }
 
         if (marketBase.Value > PricingMathConstants.MaxScore)
-            throw new ArgumentOutOfRangeException(nameof(marketBase), "Home total base exceeds score matrix size.");
+        {
+            throw new PricingException(
+                PricingErrorCodes.MarketBaseOutOfMatrix,
+                "Home total base exceeds score matrix size.");
+        }
 
         var threshold = (int)Math.Floor(marketBase.Value);
         var under = 0d;
@@ -140,10 +159,19 @@ public sealed class MarketGenerator
         MarketBase marketBase,
         double margin = 0d)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(marketBase.Value, 0d);
+        if (marketBase.Value < 0d)
+        {
+            throw new PricingException(
+                PricingErrorCodes.MarketBaseOutOfMatrix,
+                "Away total base is out of score matrix.");
+        }
 
         if (marketBase.Value > PricingMathConstants.MaxScore)
-            throw new ArgumentOutOfRangeException(nameof(marketBase), "Away total base exceeds score matrix size.");
+        {
+            throw new PricingException(
+                PricingErrorCodes.MarketBaseOutOfMatrix,
+                "Away total base exceeds score matrix size.");
+        }
 
         var threshold = (int)Math.Floor(marketBase.Value);
         var under = 0d;
@@ -165,7 +193,11 @@ public sealed class MarketGenerator
         double margin = 0d)
     {
         if (Math.Abs(marketBase.Value) > PricingMathConstants.MaxScore)
-            throw new ArgumentOutOfRangeException(nameof(marketBase), "Handicap base exceeds score matrix size.");
+        {
+            throw new PricingException(
+                PricingErrorCodes.MarketBaseOutOfMatrix,
+                "Handicap base exceeds score matrix size.");
+        }
 
         if (marketBase.Value < 0d)
         {
@@ -196,7 +228,9 @@ public sealed class MarketGenerator
             if (maxHomeScore < 0)
                 continue;
 
-            maxHomeScore = Math.Min(maxHomeScore, PricingMathConstants.MaxScore);
+            maxHomeScore = Math.Min(
+                maxHomeScore,
+                PricingMathConstants.MaxScore);
 
             for (var homeScore = 0; homeScore <= maxHomeScore; homeScore++)
                 away += _scoreMatrix[homeScore, awayScore];
@@ -212,11 +246,13 @@ public sealed class MarketGenerator
         Score score,
         double margin = 0d)
     {
-        if (score.Home > PricingMathConstants.MaxScore)
-            throw new ArgumentOutOfRangeException(nameof(score), "Home score exceeds score matrix size.");
-
-        if (score.Away > PricingMathConstants.MaxScore)
-            throw new ArgumentOutOfRangeException(nameof(score), "Away score exceeds score matrix size.");
+        if (score.Home > PricingMathConstants.MaxScore ||
+            score.Away > PricingMathConstants.MaxScore)
+        {
+            throw new PricingException(
+                PricingErrorCodes.ScoreOutOfMatrix,
+                "Score exceeds score matrix size.");
+        }
 
         return MarketFactory.CreateCorrectScore(
             score,
@@ -248,7 +284,12 @@ public sealed class MarketGenerator
             }
         }
 
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(sum, 0d);
+        if (sum <= 0d)
+        {
+            throw new PricingException(
+                PricingErrorCodes.LambdaCalculationFailed,
+                "Score matrix probability sum is zero.");
+        }
 
         for (var homeScore = 0; homeScore <= PricingMathConstants.MaxScore; homeScore++)
         {
