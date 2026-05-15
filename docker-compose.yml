@@ -1,10 +1,69 @@
 services:
+  sportsbook-postgres:
+    image: postgres:16-alpine
+    container_name: sportsbook-postgres
+    environment:
+      POSTGRES_DB: sportsbook
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - sportsbook-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sportsbook"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   sportsbook-ml-service:
     build:
-      context: ./SportsBook.MLServiceStab
+      context: ./SportsBook.MLServiceStub
       dockerfile: Dockerfile
     container_name: sportsbook-ml-service
     ports:
       - "8010:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
+
+  sportsbook-api:
+    build:
+      context: ./SportsBook.Backend
+      dockerfile: SportsBook.Api/Dockerfile
+    container_name: sportsbook-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+
+      ConnectionStrings__Postgres: Host=sportsbook-postgres;Port=5432;Database=sportsbook;Username=postgres;Password=postgres
+
+      Jwt__Issuer: SportsBook
+      Jwt__Audience: SportsBook.Client
+      Jwt__SigningKey: dev-super-secret-key-for-sportsbook-auth-change-later
+      Jwt__AccessTokenLifetimeMinutes: 60
+      Jwt__RefreshTokenLifetimeDays: 30
+
+      MlService__BaseUrl: http://sportsbook-ml-service:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      sportsbook-postgres:
+        condition: service_healthy
+      sportsbook-ml-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  sportsbook-postgres-data:
     

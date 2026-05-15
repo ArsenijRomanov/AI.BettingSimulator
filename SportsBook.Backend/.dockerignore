@@ -1,0 +1,15 @@
+﻿**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/*.user
+**/*.rsuser
+
+.git/
+.gitignore
+
+Dockerfile
+docker-compose.yml
+
+*.md
+*.log
