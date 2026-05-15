@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SportsBook.Application.Abstractions;
+using SportsBook.Infrastructure.ML;
 using SportsBook.Infrastructure.Persistence;
 using SportsBook.Infrastructure.Security;
 using SportsBook.Infrastructure.Time;
@@ -20,6 +21,7 @@ public static class DependencyInjection
             throw new InvalidOperationException("Connection string 'Postgres' is missing.");
 
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+        services.Configure<MlServiceOptions>(configuration.GetSection("MlService"));
 
         services.AddDbContext<SportsBookDbContext>(options =>
         {
@@ -35,6 +37,19 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IAuthTokenService, JwtAuthTokenService>();
+
+        services.AddHttpClient<IMatchPredictionClient, HttpMatchPredictionClient>((provider, client) =>
+        {
+            var options = configuration
+                .GetSection("MlService")
+                .Get<MlServiceOptions>();
+
+            if (options is null || string.IsNullOrWhiteSpace(options.BaseUrl))
+                throw new InvalidOperationException("ML service base URL is missing.");
+
+            client.BaseAddress = new Uri(options.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
 
         services.AddScoped<DatabaseInitializer>();
 

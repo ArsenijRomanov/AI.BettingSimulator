@@ -15,6 +15,7 @@ public static class OperatorMatchEndpoints
             .RequireAuthorization("OperatorOnly");
 
         group.MapPost("/manual-lambdas", CreateManualLambdasMatch);
+        group.MapPost("/model", CreateModelMatch);
         group.MapPost("/{matchId:guid}/markets", CreateMarkets);
         group.MapPost("/{matchId:guid}/settle", SettleMatch);
         group.MapPost("/{matchId:guid}/cancel", CancelMatch);
@@ -49,6 +50,40 @@ public static class OperatorMatchEndpoints
             result.Venue,
             result.LambdaHome,
             result.LambdaAway,
+            result.FairMarketsPreview
+                .Select(market => market.ToApiResponse())
+                .ToList());
+
+        return Results.Created($"/api/player/matches/{result.MatchId}", response);
+    }
+
+    private static async Task<IResult> CreateModelMatch(
+        CreateModelMatchRequest request,
+        CreateModelMatchHandler handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(
+            new CreateModelMatchCommand(
+                request.HomeTeamName,
+                request.AwayTeamName,
+                request.Competition,
+                request.StartTime,
+                request.Venue),
+            cancellationToken);
+
+        var response = new CreateModelMatchResponse(
+            result.MatchId,
+            result.Status.ToString(),
+            result.PricingMode.ToString(),
+            result.HomeTeamName,
+            result.AwayTeamName,
+            result.Competition,
+            result.StartTime,
+            result.Venue,
+            result.LambdaHome,
+            result.LambdaAway,
+            result.ModelVersion,
+            result.IsStubPrediction,
             result.FairMarketsPreview
                 .Select(market => market.ToApiResponse())
                 .ToList());
@@ -131,6 +166,13 @@ public static class OperatorMatchEndpoints
         double LambdaHome,
         double LambdaAway);
 
+    private sealed record CreateModelMatchRequest(
+        string HomeTeamName,
+        string AwayTeamName,
+        string Competition,
+        DateTimeOffset StartTime,
+        string? Venue);
+
     private sealed record CreateManualLambdasMatchResponse(
         Guid MatchId,
         string Status,
@@ -142,6 +184,21 @@ public static class OperatorMatchEndpoints
         string? Venue,
         double LambdaHome,
         double LambdaAway,
+        IReadOnlyList<ApiMarketPreviewResponse> FairMarketsPreview);
+
+    private sealed record CreateModelMatchResponse(
+        Guid MatchId,
+        string Status,
+        string PricingMode,
+        string HomeTeamName,
+        string AwayTeamName,
+        string Competition,
+        DateTimeOffset StartTime,
+        string? Venue,
+        double LambdaHome,
+        double LambdaAway,
+        string? ModelVersion,
+        bool IsStubPrediction,
         IReadOnlyList<ApiMarketPreviewResponse> FairMarketsPreview);
 
     private sealed record CreateMarketsRequest(

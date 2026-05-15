@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<UpdatePlayerProfileHandler>();
 
         services.AddScoped<CreateManualLambdasMatchHandler>();
+        services.AddScoped<CreateModelMatchHandler>();
         services.AddScoped<CreateMarketsHandler>();
         services.AddScoped<PlaceBetHandler>();
         services.AddScoped<SettleMatchHandler>();

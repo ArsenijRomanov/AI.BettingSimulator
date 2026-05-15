@@ -1,0 +1,10 @@
+services:
+  sportsbook-ml-service:
+    build:
+      context: ./SportsBook.MLService
+      dockerfile: Dockerfile
+    container_name: sportsbook-ml-service
+    ports:
+      - "8010:8000"
+    restart: unless-stopped
+    
