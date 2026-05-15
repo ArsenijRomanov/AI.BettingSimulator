@@ -351,8 +351,9 @@ temp/
 *.stackdump
 
 # =========================
-# Obsidian
+# etc
 # =========================
 
 SportBook Vault/
+all_code_dump.txt
 
