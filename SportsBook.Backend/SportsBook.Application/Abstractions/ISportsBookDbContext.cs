@@ -6,6 +6,10 @@ namespace SportsBook.Application.Abstractions;
 
 public interface ISportsBookDbContext
 {
+    DbSet<User> Users { get; }
+    DbSet<PlayerProfile> PlayerProfiles { get; }
+    DbSet<RefreshToken> RefreshTokens { get; }
+
     DbSet<Match> Matches { get; }
     DbSet<Market> Markets { get; }
     DbSet<Selection> Selections { get; }

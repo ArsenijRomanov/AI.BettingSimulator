@@ -1,25 +1,31 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
+using SportsBook.Application.Abstractions;
 using SportsBook.Domain.Entities;
 
-namespace SportsBook.Application.Abstractions;
+namespace SportsBook.Infrastructure.Persistence;
 
-public interface ISportsBookDbContext
+public sealed class SportsBookDbContext : DbContext, ISportsBookDbContext
 {
-    DbSet<User> Users { get; }
-    DbSet<PlayerProfile> PlayerProfiles { get; }
-    DbSet<RefreshToken> RefreshTokens { get; }
+    public SportsBookDbContext(DbContextOptions<SportsBookDbContext> options)
+        : base(options)
+    {
+    }
 
-    DbSet<Match> Matches { get; }
-    DbSet<Market> Markets { get; }
-    DbSet<Selection> Selections { get; }
+    public DbSet<User> Users => Set<User>();
+    public DbSet<PlayerProfile> PlayerProfiles => Set<PlayerProfile>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
-    DbSet<Bet> Bets { get; }
+    public DbSet<Match> Matches => Set<Match>();
+    public DbSet<Market> Markets => Set<Market>();
+    public DbSet<Selection> Selections => Set<Selection>();
 
-    DbSet<Wallet> Wallets { get; }
-    DbSet<BalanceTransaction> BalanceTransactions { get; }
+    public DbSet<Bet> Bets => Set<Bet>();
 
-    DatabaseFacade Database { get; }
+    public DbSet<Wallet> Wallets => Set<Wallet>();
+    public DbSet<BalanceTransaction> BalanceTransactions => Set<BalanceTransaction>();
 
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(SportsBookDbContext).Assembly);
+    }
 }
