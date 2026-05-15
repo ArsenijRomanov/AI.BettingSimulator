@@ -19,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<PlaceBetHandler>();
         services.AddScoped<SettleMatchHandler>();
         services.AddScoped<CancelMatchHandler>();
+
+        services.AddScoped<CreateWalletHandler>();
         services.AddScoped<GetWalletHandler>();
         services.AddScoped<DepositWalletHandler>();
 
