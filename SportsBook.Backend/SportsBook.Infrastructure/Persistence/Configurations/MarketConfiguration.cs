@@ -30,7 +30,7 @@ internal sealed class MarketConfiguration : IEntityTypeConfiguration<Market>
         builder.Property(market => market.IsActive)
             .IsRequired();
 
-        builder.HasMany<Selection>("_selections")
+        builder.HasMany(market => market.Selections)
             .WithOne()
             .HasForeignKey(selection => selection.MarketId)
             .OnDelete(DeleteBehavior.Cascade);
@@ -40,12 +40,27 @@ internal sealed class MarketConfiguration : IEntityTypeConfiguration<Market>
 
         builder.HasIndex(market => market.MatchId);
 
+        // Markets with base:
+        // Total 2.5, Handicap -1.5, HomeTotal 1.5, etc.
         builder.HasIndex(market => new
             {
                 market.MatchId,
                 market.Type,
                 market.Base
             })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("\"Base\" IS NOT NULL");
+
+        // Markets without base:
+        // HomeDrawAway, CorrectScore.
+        // PostgreSQL allows many NULL values in a unique index,
+        // so this separate filtered index is needed.
+        builder.HasIndex(market => new
+            {
+                market.MatchId,
+                market.Type
+            })
+            .IsUnique()
+            .HasFilter("\"Base\" IS NULL");
     }
 }

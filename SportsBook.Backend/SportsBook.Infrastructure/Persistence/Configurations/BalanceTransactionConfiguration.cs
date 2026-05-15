@@ -36,11 +36,6 @@ internal sealed class BalanceTransactionConfiguration : IEntityTypeConfiguration
         builder.Property(transaction => transaction.CreatedAt)
             .IsRequired();
 
-        builder.HasOne<Wallet>()
-            .WithMany(wallet => wallet.Transactions)
-            .HasForeignKey(transaction => transaction.WalletId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasOne<Bet>()
             .WithMany()
             .HasForeignKey(transaction => transaction.BetId)

@@ -16,5 +16,10 @@
     <ItemGroup>
       <ProjectReference Include="..\SportsBook.Domain\SportsBook.Domain.csproj" />
     </ItemGroup>
+    
+    <ItemGroup>
+        <ProjectReference Include="..\SportsBook.Domain\SportsBook.Domain.csproj" />
+        <ProjectReference Include="..\SportsBook.Application\SportsBook.Application.csproj" />
+    </ItemGroup>
 
 </Project>

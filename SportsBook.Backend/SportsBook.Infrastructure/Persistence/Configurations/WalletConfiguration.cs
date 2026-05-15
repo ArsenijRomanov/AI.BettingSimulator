@@ -24,6 +24,11 @@ internal sealed class WalletConfiguration : IEntityTypeConfiguration<Wallet>
 
         builder.Property(wallet => wallet.UpdatedAt);
 
+        builder.HasMany(wallet => wallet.Transactions)
+            .WithOne()
+            .HasForeignKey(transaction => transaction.WalletId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Navigation(wallet => wallet.Transactions)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 

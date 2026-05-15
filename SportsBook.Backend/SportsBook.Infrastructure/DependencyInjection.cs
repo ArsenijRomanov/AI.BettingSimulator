@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SportsBook.Application.Abstractions;
 using SportsBook.Infrastructure.Persistence;
+using SportsBook.Infrastructure.Time;
 
 namespace SportsBook.Infrastructure;
 
@@ -20,6 +22,13 @@ public static class DependencyInjection
         {
             options.UseNpgsql(connectionString);
         });
+
+        services.AddScoped<ISportsBookDbContext>(provider =>
+            provider.GetRequiredService<SportsBookDbContext>());
+
+        services.AddScoped<IFinancialLockService, PostgresFinancialLockService>();
+
+        services.AddSingleton<IClock, SystemClock>();
 
         services.AddScoped<DatabaseInitializer>();
 

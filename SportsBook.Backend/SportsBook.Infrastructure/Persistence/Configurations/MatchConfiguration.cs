@@ -59,7 +59,7 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
 
         builder.Property(match => match.UpdatedAt);
 
-        builder.HasMany<Market>("_markets")
+        builder.HasMany(match => match.Markets)
             .WithOne()
             .HasForeignKey(market => market.MatchId)
             .OnDelete(DeleteBehavior.Cascade);

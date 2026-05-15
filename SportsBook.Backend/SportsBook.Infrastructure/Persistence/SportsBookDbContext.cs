@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using SportsBook.Application.Abstractions;
 using SportsBook.Domain.Entities;
 
 namespace SportsBook.Infrastructure.Persistence;
 
-public sealed class SportsBookDbContext : DbContext
+public sealed class SportsBookDbContext : DbContext, ISportsBookDbContext
 {
     public SportsBookDbContext(DbContextOptions<SportsBookDbContext> options)
         : base(options)

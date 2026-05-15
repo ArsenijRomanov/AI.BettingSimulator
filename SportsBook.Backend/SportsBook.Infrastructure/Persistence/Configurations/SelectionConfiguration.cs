@@ -49,10 +49,25 @@ internal sealed class SelectionConfiguration : IEntityTypeConfiguration<Selectio
 
         builder.HasIndex(selection => selection.MarketId);
 
+        // Regular selections:
+        // Home/Draw/Away, Over/Under.
+        // CorrectScore selections are excluded because all of them have Code = ExactScore.
         builder.HasIndex(selection => new
         {
             selection.MarketId,
             selection.Code
-        });
+        })
+        .IsUnique()
+        .HasFilter("\"ExactScore\" IS NULL");
+
+        // CorrectScore selections:
+        // one exact score can appear only once inside one market.
+        builder.HasIndex(selection => new
+        {
+            selection.MarketId,
+            selection.ExactScore
+        })
+        .IsUnique()
+        .HasFilter("\"ExactScore\" IS NOT NULL");
     }
 }
