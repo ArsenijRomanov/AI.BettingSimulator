@@ -16,7 +16,6 @@ public sealed class MarketGenerator
         double homeLambda,
         double awayLambda)
     {
-
         if (!double.IsFinite(homeLambda))
             throw new ArgumentOutOfRangeException(nameof(homeLambda), "Home lambda must be finite.");
 
@@ -51,7 +50,7 @@ public sealed class MarketGenerator
         _scoreMatrix = BuildScoreMatrix(HomeLambda, AwayLambda);
     }
 
-    public Market<Selection> GenerateHomeDrawAway()
+    public Market<Selection> GenerateHomeDrawAway(double margin = 0d)
     {
         var home = 0d;
         var draw = 0d;
@@ -75,10 +74,13 @@ public sealed class MarketGenerator
         return MarketFactory.CreateHomeDrawAway(
             new Probability(home),
             new Probability(draw),
-            new Probability(away));
+            new Probability(away),
+            margin);
     }
 
-    public MarketWithBase GenerateTotal(MarketBase marketBase)
+    public MarketWithBase GenerateTotal(
+        MarketBase marketBase,
+        double margin = 0d)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(marketBase.Value, 0d);
 
@@ -106,10 +108,13 @@ public sealed class MarketGenerator
 
         return MarketFactory.CreateTotalFromUnder(
             marketBase,
-            new Probability(under));
+            new Probability(under),
+            margin);
     }
 
-    public MarketWithBase GenerateHomeTotal(MarketBase marketBase)
+    public MarketWithBase GenerateHomeTotal(
+        MarketBase marketBase,
+        double margin = 0d)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(marketBase.Value, 0d);
 
@@ -127,10 +132,13 @@ public sealed class MarketGenerator
 
         return MarketFactory.CreateHomeTotalFromUnder(
             marketBase,
-            new Probability(under));
+            new Probability(under),
+            margin);
     }
 
-    public MarketWithBase GenerateAwayTotal(MarketBase marketBase)
+    public MarketWithBase GenerateAwayTotal(
+        MarketBase marketBase,
+        double margin = 0d)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(marketBase.Value, 0d);
 
@@ -148,10 +156,13 @@ public sealed class MarketGenerator
 
         return MarketFactory.CreateAwayTotalFromUnder(
             marketBase,
-            new Probability(under));
+            new Probability(under),
+            margin);
     }
 
-    public MarketWithBase GenerateHandicap(MarketBase marketBase)
+    public MarketWithBase GenerateHandicap(
+        MarketBase marketBase,
+        double margin = 0d)
     {
         if (Math.Abs(marketBase.Value) > PricingMathConstants.MaxScore)
             throw new ArgumentOutOfRangeException(nameof(marketBase), "Handicap base exceeds score matrix size.");
@@ -171,7 +182,8 @@ public sealed class MarketGenerator
 
             return MarketFactory.CreateHandicapFromHome(
                 marketBase,
-                new Probability(home));
+                new Probability(home),
+                margin);
         }
 
         var homeThreshold = (int)Math.Floor(-marketBase.Value) + 1;
@@ -192,10 +204,13 @@ public sealed class MarketGenerator
 
         return MarketFactory.CreateHandicapFromAway(
             marketBase,
-            new Probability(away));
+            new Probability(away),
+            margin);
     }
 
-    public Market<CorrectScoreSelection> GenerateCorrectScore(Score score)
+    public Market<CorrectScoreSelection> GenerateCorrectScore(
+        Score score,
+        double margin = 0d)
     {
         if (score.Home > PricingMathConstants.MaxScore)
             throw new ArgumentOutOfRangeException(nameof(score), "Home score exceeds score matrix size.");
@@ -205,7 +220,8 @@ public sealed class MarketGenerator
 
         return MarketFactory.CreateCorrectScore(
             score,
-            new Probability(_scoreMatrix[score.Home, score.Away]));
+            new Probability(_scoreMatrix[score.Home, score.Away]),
+            margin);
     }
 
     private static double[,] BuildScoreMatrix(

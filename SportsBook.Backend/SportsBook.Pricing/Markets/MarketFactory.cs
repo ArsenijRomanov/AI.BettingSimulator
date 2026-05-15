@@ -10,7 +10,8 @@ internal static class MarketFactory
     public static Market<Selection> CreateHomeDrawAway(
         Probability home,
         Probability draw,
-        Probability away)
+        Probability away,
+        double margin = 0d)
     {
         if (!Probability.SumApproximatelyEqualsOne(home, draw, away))
             throw new ArgumentException("HomeDrawAway probabilities must sum to 1.");
@@ -18,90 +19,108 @@ internal static class MarketFactory
         return new Market<Selection>(
             MarketType.HomeDrawAway,
             [
-                CreateSelection(SelectionCode.Home, home),
-                CreateSelection(SelectionCode.Draw, draw),
-                CreateSelection(SelectionCode.Away, away)
+                CreateSelection(SelectionCode.Home, home, margin),
+                CreateSelection(SelectionCode.Draw, draw, margin),
+                CreateSelection(SelectionCode.Away, away, margin)
             ]);
     }
 
     public static MarketWithBase CreateTotalFromOver(
         MarketBase marketBase,
-        Probability over) =>
+        Probability over,
+        double margin = 0d) =>
         CreateOverUnderMarket(
             MarketType.Total,
             marketBase,
-            over);
+            over,
+            margin);
 
     public static MarketWithBase CreateTotalFromUnder(
         MarketBase marketBase,
-        Probability under) =>
+        Probability under,
+        double margin = 0d) =>
         CreateOverUnderMarket(
             MarketType.Total,
             marketBase,
-            under.Inverse());
+            under.Inverse(),
+            margin);
 
     public static MarketWithBase CreateHomeTotalFromOver(
         MarketBase marketBase,
-        Probability over) =>
+        Probability over,
+        double margin = 0d) =>
         CreateOverUnderMarket(
             MarketType.HomeTotal,
             marketBase,
-            over);
+            over,
+            margin);
 
     public static MarketWithBase CreateHomeTotalFromUnder(
         MarketBase marketBase,
-        Probability under) =>
+        Probability under,
+        double margin = 0d) =>
         CreateOverUnderMarket(
             MarketType.HomeTotal,
             marketBase,
-            under.Inverse());
+            under.Inverse(),
+            margin);
 
     public static MarketWithBase CreateAwayTotalFromOver(
         MarketBase marketBase,
-        Probability over) =>
+        Probability over,
+        double margin = 0d) =>
         CreateOverUnderMarket(
             MarketType.AwayTotal,
             marketBase,
-            over);
+            over,
+            margin);
 
     public static MarketWithBase CreateAwayTotalFromUnder(
         MarketBase marketBase,
-        Probability under) =>
+        Probability under,
+        double margin = 0d) =>
         CreateOverUnderMarket(
             MarketType.AwayTotal,
             marketBase,
-            under.Inverse());
+            under.Inverse(),
+            margin);
 
     public static MarketWithBase CreateHandicapFromHome(
         MarketBase marketBase,
-        Probability home) =>
+        Probability home,
+        double margin = 0d) =>
         CreateHomeAwayMarket(
             marketBase,
-            home);
+            home,
+            margin);
 
     public static MarketWithBase CreateHandicapFromAway(
         MarketBase marketBase,
-        Probability away) =>
+        Probability away,
+        double margin = 0d) =>
         CreateHomeAwayMarket(
             marketBase,
-            away.Inverse());
+            away.Inverse(),
+            margin);
 
     public static Market<CorrectScoreSelection> CreateCorrectScore(
         Score score,
-        Probability probability) =>
+        Probability probability,
+        double margin = 0d) =>
         new(
             MarketType.CorrectScore,
             [
                 new CorrectScoreSelection(
                     score,
                     probability,
-                    ToSafeOdds(probability))
+                    ToSafeOdds(probability, margin))
             ]);
 
     private static MarketWithBase CreateOverUnderMarket(
         MarketType type,
         MarketBase marketBase,
-        Probability over)
+        Probability over,
+        double margin)
     {
         var under = over.Inverse();
 
@@ -109,14 +128,15 @@ internal static class MarketFactory
             type,
             marketBase,
             [
-                CreateSelection(SelectionCode.Over, over),
-                CreateSelection(SelectionCode.Under, under)
+                CreateSelection(SelectionCode.Over, over, margin),
+                CreateSelection(SelectionCode.Under, under, margin)
             ]);
     }
 
     private static MarketWithBase CreateHomeAwayMarket(
         MarketBase marketBase,
-        Probability home)
+        Probability home,
+        double margin)
     {
         var away = home.Inverse();
 
@@ -124,26 +144,36 @@ internal static class MarketFactory
             MarketType.Handicap,
             marketBase,
             [
-                CreateSelection(SelectionCode.Home, home),
-                CreateSelection(SelectionCode.Away, away)
+                CreateSelection(SelectionCode.Home, home, margin),
+                CreateSelection(SelectionCode.Away, away, margin)
             ]);
     }
 
     private static Selection CreateSelection(
         SelectionCode code,
-        Probability probability) =>
+        Probability probability,
+        double margin) =>
         new(
             code,
             probability,
-            ToSafeOdds(probability));
+            ToSafeOdds(probability, margin));
 
-    private static Odds ToSafeOdds(Probability probability)
+    private static Odds ToSafeOdds(
+        Probability probability,
+        double margin)
     {
-        var value = Math.Clamp(
-            probability.Value,
+        if (!double.IsFinite(margin))
+            throw new ArgumentOutOfRangeException(nameof(margin), "Margin must be finite.");
+
+        ArgumentOutOfRangeException.ThrowIfLessThan(margin, 0d);
+
+        var bookmakerProbability = probability.Value * (1d + margin);
+
+        bookmakerProbability = Math.Clamp(
+            bookmakerProbability,
             MinOddsProbability,
             1d - MinOddsProbability);
 
-        return new Probability(value).ToOdds();
+        return new Odds(1d / bookmakerProbability);
     }
 }
