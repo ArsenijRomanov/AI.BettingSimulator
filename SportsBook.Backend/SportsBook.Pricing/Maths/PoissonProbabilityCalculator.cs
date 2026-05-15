@@ -1,3 +1,4 @@
+using SportsBook.Domain.ValueObjects;
 using SportsBook.Pricing.ValueObjects;
 
 namespace SportsBook.Pricing.Maths;

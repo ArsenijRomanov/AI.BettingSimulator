@@ -1,7 +1,6 @@
 using System.Globalization;
 
-
-namespace SportsBook.Pricing.ValueObjects;
+namespace SportsBook.Domain.ValueObjects;
 
 public readonly record struct Probability
 {

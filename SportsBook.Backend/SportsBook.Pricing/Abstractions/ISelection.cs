@@ -1,3 +1,5 @@
+using SportsBook.Domain.Enums;
+using SportsBook.Domain.ValueObjects;
 using SportsBook.Pricing.Enums;
 using SportsBook.Pricing.ValueObjects;
 

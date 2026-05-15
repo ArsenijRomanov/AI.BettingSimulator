@@ -1,3 +1,5 @@
+using SportsBook.Domain.Enums;
+using SportsBook.Domain.ValueObjects;
 using SportsBook.Pricing.Abstractions;
 using SportsBook.Pricing.Constants;
 using SportsBook.Pricing.Enums;
@@ -18,34 +20,34 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
 
     /// <inheritdoc />
     public (double Home, double Away) Calculate(
-        MarketWithBase totalMarket,
-        MarketWithBase handicapMarket)
+        PricedMarketWithBase totalPricedMarket,
+        PricedMarketWithBase handicapPricedMarket)
     {
-        var totalLambda = CalculateTotalLambda(totalMarket);
+        var totalLambda = CalculateTotalLambda(totalPricedMarket);
 
         return CalculateByTotalLambdaAndHandicap(
             totalLambda,
-            handicapMarket);
+            handicapPricedMarket);
     }
 
     /// <inheritdoc />
-    public double CalculateTotalLambda(MarketWithBase totalMarket)
+    public double CalculateTotalLambda(PricedMarketWithBase totalPricedMarket)
     {
-        ArgumentNullException.ThrowIfNull(totalMarket);
+        ArgumentNullException.ThrowIfNull(totalPricedMarket);
 
-        if (totalMarket.Type != MarketType.Total)
+        if (totalPricedMarket.Type != MarketType.Total)
         {
             throw new PricingException(
                 PricingErrorCodes.InvalidSourceMarket,
                 "Total market is required.");
         }
 
-        var (targetOverProbability, _) = Demargin(totalMarket);
-        var threshold = (int)Math.Floor(totalMarket.Base.Value);
+        var (targetOverProbability, _) = Demargin(totalPricedMarket);
+        var threshold = (int)Math.Floor(totalPricedMarket.Base.Value);
 
         var lambda = Math.Max(
             MinLambda,
-            totalMarket.Base.Value + 0.5d);
+            totalPricedMarket.Base.Value + 0.5d);
 
         for (var i = 0; i < MaxIterations; i++)
         {
@@ -83,22 +85,22 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
     /// <inheritdoc />
     public (double Home, double Away) CalculateByTotalLambdaAndHandicap(
         double totalLambda,
-        MarketWithBase handicapMarket)
+        PricedMarketWithBase handicapPricedMarket)
     {
         if (!double.IsFinite(totalLambda))
             throw new ArgumentOutOfRangeException(nameof(totalLambda), "Total lambda must be finite.");
 
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(totalLambda, 0d);
-        ArgumentNullException.ThrowIfNull(handicapMarket);
+        ArgumentNullException.ThrowIfNull(handicapPricedMarket);
 
-        if (handicapMarket.Type != MarketType.Handicap)
+        if (handicapPricedMarket.Type != MarketType.Handicap)
         {
             throw new PricingException(
                 PricingErrorCodes.InvalidSourceMarket,
                 "Handicap market is required.");
         }
 
-        var (targetHomeProbability, _) = Demargin(handicapMarket);
+        var (targetHomeProbability, _) = Demargin(handicapPricedMarket);
 
         var left = MinShare;
         var right = MaxShare;
@@ -113,7 +115,7 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
             var homeHandicapProbability = CalculateHomeHandicapProbability(
                 homeLambda,
                 awayLambda,
-                handicapMarket.Base);
+                handicapPricedMarket.Base);
 
             var difference = homeHandicapProbability - targetHomeProbability.Value;
 
@@ -138,20 +140,20 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
     /// <summary>
     /// Размаржевывает двухисходный рынок.
     /// </summary>
-    /// <param name="market">Двухисходный рынок с двумя селекшенами.</param>
+    /// <param name="pricedMarket">Двухисходный рынок с двумя селекшенами.</param>
     /// <returns>Пара размаржеванных вероятностей в порядке селекшенов рынка.</returns>
-    private static (Probability First, Probability Second) Demargin(MarketWithBase market)
+    private static (Probability First, Probability Second) Demargin(PricedMarketWithBase pricedMarket)
     {
-        ArgumentNullException.ThrowIfNull(market);
+        ArgumentNullException.ThrowIfNull(pricedMarket);
 
-        if (market.Selections.Count != 2)
+        if (pricedMarket.Selections.Count != 2)
         {
             throw new PricingException(
                 PricingErrorCodes.InvalidSourceMarket,
                 "Market must contain exactly two selections.");
         }
 
-        var (firstCode, secondCode) = market.Type switch
+        var (firstCode, secondCode) = pricedMarket.Type switch
         {
             MarketType.Total => (SelectionCode.Over, SelectionCode.Under),
             MarketType.Handicap => (SelectionCode.Home, SelectionCode.Away),
@@ -160,8 +162,8 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
                 "Market type is not supported for demargin.")
         };
 
-        var first = GetSelection(market, firstCode);
-        var second = GetSelection(market, secondCode);
+        var first = GetSelection(pricedMarket, firstCode);
+        var second = GetSelection(pricedMarket, secondCode);
 
         var firstImpliedProbability = first.Odds.ToProbability().Value;
         var secondImpliedProbability = second.Odds.ToProbability().Value;
@@ -180,13 +182,13 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
             Second: new Probability(secondImpliedProbability / impliedProbabilitySum));
     }
 
-    private static Selection GetSelection(
-        MarketWithBase market,
+    private static PricedSelection GetSelection(
+        PricedMarketWithBase pricedMarket,
         SelectionCode code)
     {
-        Selection? result = null;
+        PricedSelection? result = null;
 
-        foreach (var selection in market.Selections)
+        foreach (var selection in pricedMarket.Selections)
         {
             if (selection.Code != code)
                 continue;

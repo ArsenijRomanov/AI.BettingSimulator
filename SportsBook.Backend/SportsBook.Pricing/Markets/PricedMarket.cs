@@ -1,16 +1,17 @@
+using SportsBook.Domain.Enums;
 using SportsBook.Pricing.Abstractions;
 using SportsBook.Pricing.Enums;
 using SportsBook.Pricing.Helpers;
 
 namespace SportsBook.Pricing.Markets;
 
-public sealed record Market<TSelection> : IMarket
+public sealed record PricedMarket<TSelection> : IMarket
     where TSelection : ISelection
 {
     public MarketType Type { get; }
     public IReadOnlyList<TSelection> Selections { get; }
 
-    public Market(
+    public PricedMarket(
         MarketType type,
         IReadOnlyList<TSelection> selections)
     {

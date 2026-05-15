@@ -1,4 +1,4 @@
-namespace SportsBook.Pricing.Enums;
+namespace SportsBook.Domain.Enums;
 
 public enum SelectionCode : byte
 {

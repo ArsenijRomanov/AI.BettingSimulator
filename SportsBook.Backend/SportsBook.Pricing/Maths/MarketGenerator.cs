@@ -1,3 +1,4 @@
+using SportsBook.Domain.ValueObjects;
 using SportsBook.Pricing.Abstractions;
 using SportsBook.Pricing.Constants;
 using SportsBook.Pricing.Exceptions;
@@ -34,16 +35,16 @@ public sealed class MarketGenerator
 
     public MarketGenerator(
         ILambdaPairCalculator lambdaPairCalculator,
-        MarketWithBase totalMarket,
-        MarketWithBase handicapMarket)
+        PricedMarketWithBase totalPricedMarket,
+        PricedMarketWithBase handicapPricedMarket)
     {
         ArgumentNullException.ThrowIfNull(lambdaPairCalculator);
-        ArgumentNullException.ThrowIfNull(totalMarket);
-        ArgumentNullException.ThrowIfNull(handicapMarket);
+        ArgumentNullException.ThrowIfNull(totalPricedMarket);
+        ArgumentNullException.ThrowIfNull(handicapPricedMarket);
 
         var (home, away) = lambdaPairCalculator.Calculate(
-            totalMarket,
-            handicapMarket);
+            totalPricedMarket,
+            handicapPricedMarket);
 
         HomeLambda = home;
         AwayLambda = away;
@@ -51,7 +52,7 @@ public sealed class MarketGenerator
         _scoreMatrix = BuildScoreMatrix(HomeLambda, AwayLambda);
     }
 
-    public Market<Selection> GenerateHomeDrawAway(double margin = 0d)
+    public PricedMarket<PricedSelection> GenerateHomeDrawAway(double margin = 0d)
     {
         var home = 0d;
         var draw = 0d;
@@ -79,7 +80,7 @@ public sealed class MarketGenerator
             margin);
     }
 
-    public MarketWithBase GenerateTotal(
+    public PricedMarketWithBase GenerateTotal(
         MarketBase marketBase,
         double margin = 0d)
     {
@@ -122,7 +123,7 @@ public sealed class MarketGenerator
             margin);
     }
 
-    public MarketWithBase GenerateHomeTotal(
+    public PricedMarketWithBase GenerateHomeTotal(
         MarketBase marketBase,
         double margin = 0d)
     {
@@ -155,7 +156,7 @@ public sealed class MarketGenerator
             margin);
     }
 
-    public MarketWithBase GenerateAwayTotal(
+    public PricedMarketWithBase GenerateAwayTotal(
         MarketBase marketBase,
         double margin = 0d)
     {
@@ -188,7 +189,7 @@ public sealed class MarketGenerator
             margin);
     }
 
-    public MarketWithBase GenerateHandicap(
+    public PricedMarketWithBase GenerateHandicap(
         MarketBase marketBase,
         double margin = 0d)
     {
@@ -242,7 +243,7 @@ public sealed class MarketGenerator
             margin);
     }
 
-    public Market<CorrectScoreSelection> GenerateCorrectScore(
+    public PricedMarket<PricedCorrectScoreSelection> GenerateCorrectScore(
         Score score,
         double margin = 0d)
     {

@@ -1,3 +1,5 @@
+using SportsBook.Domain.Enums;
+
 namespace SportsBook.Pricing.Enums;
 
 public static class MarketTypeExtensions

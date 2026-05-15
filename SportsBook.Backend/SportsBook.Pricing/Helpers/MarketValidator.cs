@@ -1,3 +1,4 @@
+using SportsBook.Domain.Enums;
 using SportsBook.Pricing.Abstractions;
 using SportsBook.Pricing.Enums;
 using SportsBook.Pricing.ValueObjects;
@@ -37,7 +38,7 @@ internal static class MarketValidator
 
     public static void ValidateWithBase(
         MarketType type,
-        IReadOnlyList<Selection> selections)
+        IReadOnlyList<PricedSelection> selections)
     {
         ArgumentNullException.ThrowIfNull(selections);
         ArgumentOutOfRangeException.ThrowIfZero(selections.Count);
@@ -97,7 +98,7 @@ internal static class MarketValidator
         }
     }
 
-    private static void ValidateOverUnder(IReadOnlyList<Selection> selections)
+    private static void ValidateOverUnder(IReadOnlyList<PricedSelection> selections)
     {
         if (selections.Count != 2)
             throw new ArgumentException("Over/Under market must contain exactly two selections.", nameof(selections));
@@ -123,7 +124,7 @@ internal static class MarketValidator
         }
     }
 
-    private static void ValidateHomeAway(IReadOnlyList<Selection> selections)
+    private static void ValidateHomeAway(IReadOnlyList<PricedSelection> selections)
     {
         if (selections.Count != 2)
             throw new ArgumentException("Handicap market must contain exactly two selections.", nameof(selections));
@@ -156,7 +157,7 @@ internal static class MarketValidator
         if (selections.Count != 1)
             throw new ArgumentException("CorrectScore market must contain exactly one selection.", nameof(selections));
 
-        if (selections[0] is not CorrectScoreSelection selection)
+        if (selections[0] is not PricedCorrectScoreSelection selection)
             throw new ArgumentException("CorrectScore market must contain CorrectScoreSelection.", nameof(selections));
 
         if (selection.Code != SelectionCode.ExactScore)

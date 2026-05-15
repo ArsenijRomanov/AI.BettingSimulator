@@ -1,3 +1,5 @@
+using SportsBook.Domain.Enums;
+using SportsBook.Domain.ValueObjects;
 using SportsBook.Pricing.Enums;
 using SportsBook.Pricing.Exceptions;
 using SportsBook.Pricing.ValueObjects;
@@ -8,7 +10,7 @@ internal static class MarketFactory
 {
     private const double MinOddsProbability = 1e-12;
 
-    public static Market<Selection> CreateHomeDrawAway(
+    public static PricedMarket<PricedSelection> CreateHomeDrawAway(
         Probability home,
         Probability draw,
         Probability away,
@@ -17,7 +19,7 @@ internal static class MarketFactory
         if (!Probability.SumApproximatelyEqualsOne(home, draw, away))
             throw new ArgumentException("HomeDrawAway probabilities must sum to 1.");
 
-        return new Market<Selection>(
+        return new PricedMarket<PricedSelection>(
             MarketType.HomeDrawAway,
             [
                 CreateSelection(SelectionCode.Home, home, margin),
@@ -26,7 +28,7 @@ internal static class MarketFactory
             ]);
     }
 
-    public static MarketWithBase CreateTotalFromOver(
+    public static PricedMarketWithBase CreateTotalFromOver(
         MarketBase marketBase,
         Probability over,
         double margin = 0d) =>
@@ -36,7 +38,7 @@ internal static class MarketFactory
             over,
             margin);
 
-    public static MarketWithBase CreateTotalFromUnder(
+    public static PricedMarketWithBase CreateTotalFromUnder(
         MarketBase marketBase,
         Probability under,
         double margin = 0d) =>
@@ -46,7 +48,7 @@ internal static class MarketFactory
             under.Inverse(),
             margin);
 
-    public static MarketWithBase CreateHomeTotalFromOver(
+    public static PricedMarketWithBase CreateHomeTotalFromOver(
         MarketBase marketBase,
         Probability over,
         double margin = 0d) =>
@@ -56,7 +58,7 @@ internal static class MarketFactory
             over,
             margin);
 
-    public static MarketWithBase CreateHomeTotalFromUnder(
+    public static PricedMarketWithBase CreateHomeTotalFromUnder(
         MarketBase marketBase,
         Probability under,
         double margin = 0d) =>
@@ -66,7 +68,7 @@ internal static class MarketFactory
             under.Inverse(),
             margin);
 
-    public static MarketWithBase CreateAwayTotalFromOver(
+    public static PricedMarketWithBase CreateAwayTotalFromOver(
         MarketBase marketBase,
         Probability over,
         double margin = 0d) =>
@@ -76,7 +78,7 @@ internal static class MarketFactory
             over,
             margin);
 
-    public static MarketWithBase CreateAwayTotalFromUnder(
+    public static PricedMarketWithBase CreateAwayTotalFromUnder(
         MarketBase marketBase,
         Probability under,
         double margin = 0d) =>
@@ -86,7 +88,7 @@ internal static class MarketFactory
             under.Inverse(),
             margin);
 
-    public static MarketWithBase CreateHandicapFromHome(
+    public static PricedMarketWithBase CreateHandicapFromHome(
         MarketBase marketBase,
         Probability home,
         double margin = 0d) =>
@@ -95,7 +97,7 @@ internal static class MarketFactory
             home,
             margin);
 
-    public static MarketWithBase CreateHandicapFromAway(
+    public static PricedMarketWithBase CreateHandicapFromAway(
         MarketBase marketBase,
         Probability away,
         double margin = 0d) =>
@@ -104,20 +106,20 @@ internal static class MarketFactory
             away.Inverse(),
             margin);
 
-    public static Market<CorrectScoreSelection> CreateCorrectScore(
+    public static PricedMarket<PricedCorrectScoreSelection> CreateCorrectScore(
         Score score,
         Probability probability,
         double margin = 0d) =>
         new(
             MarketType.CorrectScore,
             [
-                new CorrectScoreSelection(
+                new PricedCorrectScoreSelection(
                     score,
                     probability,
                     ToSafeOdds(probability, margin))
             ]);
 
-    private static MarketWithBase CreateOverUnderMarket(
+    private static PricedMarketWithBase CreateOverUnderMarket(
         MarketType type,
         MarketBase marketBase,
         Probability over,
@@ -125,7 +127,7 @@ internal static class MarketFactory
     {
         var under = over.Inverse();
 
-        return new MarketWithBase(
+        return new PricedMarketWithBase(
             type,
             marketBase,
             [
@@ -134,14 +136,14 @@ internal static class MarketFactory
             ]);
     }
 
-    private static MarketWithBase CreateHomeAwayMarket(
+    private static PricedMarketWithBase CreateHomeAwayMarket(
         MarketBase marketBase,
         Probability home,
         double margin)
     {
         var away = home.Inverse();
 
-        return new MarketWithBase(
+        return new PricedMarketWithBase(
             MarketType.Handicap,
             marketBase,
             [
@@ -150,7 +152,7 @@ internal static class MarketFactory
             ]);
     }
 
-    private static Selection CreateSelection(
+    private static PricedSelection CreateSelection(
         SelectionCode code,
         Probability probability,
         double margin) =>
