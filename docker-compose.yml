@@ -1,7 +1,7 @@
 services:
   sportsbook-ml-service:
     build:
-      context: ./SportsBook.MLService
+      context: ./SportsBook.MLServiceStab
       dockerfile: Dockerfile
     container_name: sportsbook-ml-service
     ports:
