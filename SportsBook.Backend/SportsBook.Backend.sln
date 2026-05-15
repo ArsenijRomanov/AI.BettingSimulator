@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SportsBook.Domain", "Sports
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SportsBook.Infrastructure", "SportsBook.Infrastructure\SportsBook.Infrastructure.csproj", "{52A77EF6-25CC-467D-AD26-79F085B83AF3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SportsBook.Application", "SportsBook.Application\SportsBook.Application.csproj", "{B976070F-43BD-47AE-A754-54E929D423BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{52A77EF6-25CC-467D-AD26-79F085B83AF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52A77EF6-25CC-467D-AD26-79F085B83AF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52A77EF6-25CC-467D-AD26-79F085B83AF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B976070F-43BD-47AE-A754-54E929D423BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B976070F-43BD-47AE-A754-54E929D423BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B976070F-43BD-47AE-A754-54E929D423BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B976070F-43BD-47AE-A754-54E929D423BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
