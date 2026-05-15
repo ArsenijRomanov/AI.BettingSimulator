@@ -11,7 +11,8 @@ public static class OperatorMatchEndpoints
     public static IEndpointRouteBuilder MapOperatorMatchEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/operator/matches")
-            .WithTags("Operator Matches");
+            .WithTags("Operator Matches")
+            .RequireAuthorization("OperatorOnly");
 
         group.MapPost("/manual-lambdas", CreateManualLambdasMatch);
         group.MapPost("/{matchId:guid}/markets", CreateMarkets);

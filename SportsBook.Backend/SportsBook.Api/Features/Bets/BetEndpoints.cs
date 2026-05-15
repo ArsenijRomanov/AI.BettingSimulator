@@ -8,7 +8,8 @@ public static class BetEndpoints
     public static IEndpointRouteBuilder MapBetEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/bets")
-            .WithTags("Bets");
+            .WithTags("Bets")
+            .RequireAuthorization("PlayerOnly");
 
         group.MapPost("", PlaceBet);
 

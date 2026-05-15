@@ -11,6 +11,10 @@ public sealed class SportsBookDbContext : DbContext, ISportsBookDbContext
     {
     }
 
+    public DbSet<User> Users => Set<User>();
+    public DbSet<PlayerProfile> PlayerProfiles => Set<PlayerProfile>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<Market> Markets => Set<Market>();
     public DbSet<Selection> Selections => Set<Selection>();

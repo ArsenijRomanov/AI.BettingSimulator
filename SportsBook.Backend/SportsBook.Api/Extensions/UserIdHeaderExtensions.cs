@@ -1,21 +1,19 @@
+using System.Security.Claims;
+
 namespace SportsBook.Api.Extensions;
 
 public static class UserIdHeaderExtensions
 {
-    private const string HeaderName = "X-User-Id";
-
     public static Guid GetRequiredUserId(this HttpContext context)
     {
-        if (!context.Request.Headers.TryGetValue(HeaderName, out var values))
-            throw new InvalidOperationException($"Header '{HeaderName}' is required.");
-
-        var rawValue = values.FirstOrDefault();
+        var rawValue = context.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                       ?? context.User.FindFirstValue("sub");
 
         if (string.IsNullOrWhiteSpace(rawValue))
-            throw new InvalidOperationException($"Header '{HeaderName}' cannot be empty.");
+            throw new InvalidOperationException("Authenticated user id was not found.");
 
         if (!Guid.TryParse(rawValue, out var userId))
-            throw new InvalidOperationException($"Header '{HeaderName}' must be a valid GUID.");
+            throw new InvalidOperationException("Authenticated user id is invalid.");
 
         return userId;
     }

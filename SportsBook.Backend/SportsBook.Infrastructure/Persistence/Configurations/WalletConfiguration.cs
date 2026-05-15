@@ -31,6 +31,11 @@ internal sealed class WalletConfiguration : IEntityTypeConfiguration<Wallet>
 
         builder.Navigation(wallet => wallet.Transactions)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+        
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(wallet => wallet.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(wallet => wallet.UserId)
             .IsUnique();

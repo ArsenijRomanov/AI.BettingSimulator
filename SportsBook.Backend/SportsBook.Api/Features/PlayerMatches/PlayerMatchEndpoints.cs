@@ -10,7 +10,8 @@ public static class PlayerMatchEndpoints
     public static IEndpointRouteBuilder MapPlayerMatchEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/player/matches")
-            .WithTags("Player Matches");
+            .WithTags("Player Matches")
+            .RequireAuthorization();
 
         group.MapGet("", GetOpenMatches);
         group.MapGet("/{matchId:guid}", GetMatchById);

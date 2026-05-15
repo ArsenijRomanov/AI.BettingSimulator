@@ -52,6 +52,11 @@ internal sealed class BetConfiguration : IEntityTypeConfiguration<Bet>
             .IsRequired();
 
         builder.Property(bet => bet.SettledAt);
+        
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(bet => bet.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<Match>()
             .WithMany()
