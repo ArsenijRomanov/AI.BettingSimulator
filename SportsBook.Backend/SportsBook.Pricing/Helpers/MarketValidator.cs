@@ -153,27 +153,14 @@ internal static class MarketValidator
         IReadOnlyList<TSelection> selections)
         where TSelection : ISelection
     {
-        foreach (var selection in selections)
-        {
-            if (selection is not CorrectScoreSelection)
-                throw new ArgumentException("CorrectScore market must contain only CorrectScoreSelection items.", nameof(selections));
+        if (selections.Count != 1)
+            throw new ArgumentException("CorrectScore market must contain exactly one selection.", nameof(selections));
 
-            if (selection.Code != SelectionCode.ExactScore)
-                throw new ArgumentException("CorrectScore market must contain only ExactScore selections.", nameof(selections));
-        }
+        if (selections[0] is not CorrectScoreSelection selection)
+            throw new ArgumentException("CorrectScore market must contain CorrectScoreSelection.", nameof(selections));
 
-        for (var i = 0; i < selections.Count; i++)
-        {
-            var first = (CorrectScoreSelection)(ISelection)selections[i];
-
-            for (var j = i + 1; j < selections.Count; j++)
-            {
-                var second = (CorrectScoreSelection)(ISelection)selections[j];
-
-                if (first.Score == second.Score)
-                    throw new ArgumentException($"Correct score {first.Score} is duplicated.", nameof(selections));
-            }
-        }
+        if (selection.Code != SelectionCode.ExactScore)
+            throw new ArgumentException("CorrectScore market must contain ExactScore selection.", nameof(selections));
     }
 
     private static void ValidateNoSurebet<TSelection>(

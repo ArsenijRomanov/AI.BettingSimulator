@@ -10,8 +10,8 @@ public readonly record struct Score
 
     public Score(int home, int away)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(home, "Home score cannot be negative.");
-        ArgumentOutOfRangeException.ThrowIfNegative(away, "Away score cannot be negative.");
+        ArgumentOutOfRangeException.ThrowIfNegative(home);
+        ArgumentOutOfRangeException.ThrowIfNegative(away);
         
         Home = home;
         Away = away;

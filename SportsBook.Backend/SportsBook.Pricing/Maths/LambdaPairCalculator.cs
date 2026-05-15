@@ -1,4 +1,5 @@
 using SportsBook.Pricing.Abstractions;
+using SportsBook.Pricing.Constants;
 using SportsBook.Pricing.Enums;
 using SportsBook.Pricing.Markets;
 using SportsBook.Pricing.ValueObjects;
@@ -7,36 +8,12 @@ namespace SportsBook.Pricing.Maths;
 
 public sealed class LambdaPairCalculator : ILambdaPairCalculator
 {
-    private const int DefaultMaxScore = 20;
-    private const int DefaultMaxIterations = 100;
-    private const double DefaultTolerance = 1e-10;
+    private const int MaxIterations = 100;
+    private const double Tolerance = 1e-10;
 
     private const double MinLambda = 1e-6;
     private const double MinShare = 1e-4;
     private const double MaxShare = 1d - MinShare;
-
-    private readonly int _maxScore;
-    private readonly int _maxIterations;
-    private readonly double _tolerance;
-
-    public LambdaPairCalculator()
-        : this(DefaultMaxScore, DefaultMaxIterations, DefaultTolerance)
-    {
-    }
-
-    public LambdaPairCalculator(
-        int maxScore,
-        int maxIterations,
-        double tolerance)
-    {
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maxScore, 0);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(maxIterations, 0);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(tolerance, 0d);
-
-        _maxScore = maxScore;
-        _maxIterations = maxIterations;
-        _tolerance = tolerance;
-    }
 
     /// <inheritdoc />
     public (double Home, double Away) Calculate(
@@ -63,7 +40,7 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
 
         var lambda = Math.Max(MinLambda, totalMarket.Base.Value + 0.5d);
 
-        for (var i = 0; i < _maxIterations; i++)
+        for (var i = 0; i < MaxIterations; i++)
         {
             var overProbability = PoissonProbabilityCalculator
                 .GreaterThan(threshold, lambda)
@@ -71,7 +48,7 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
 
             var functionValue = overProbability - targetOverProbability.Value;
 
-            if (Math.Abs(functionValue) <= _tolerance)
+            if (Math.Abs(functionValue) <= Tolerance)
                 return lambda;
 
             var derivative = PoissonProbabilityCalculator
@@ -110,7 +87,7 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
         var right = MaxShare;
         var middle = 0.5d;
 
-        for (var i = 0; i < _maxIterations; i++)
+        for (var i = 0; i < MaxIterations; i++)
         {
             middle = (left + right) / 2d;
 
@@ -124,7 +101,7 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
 
             var difference = homeHandicapProbability - targetHomeProbability.Value;
 
-            if (Math.Abs(difference) <= _tolerance)
+            if (Math.Abs(difference) <= Tolerance)
                 break;
 
             if (homeHandicapProbability < targetHomeProbability.Value)
@@ -150,8 +127,18 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
         if (market.Selections.Count != 2)
             throw new ArgumentException("Market must contain exactly two selections.", nameof(market));
 
-        var firstImpliedProbability = market.Selections[0].Odds.ToProbability().Value;
-        var secondImpliedProbability = market.Selections[1].Odds.ToProbability().Value;
+        var (firstCode, secondCode) = market.Type switch
+        {
+            MarketType.Total => (SelectionCode.Over, SelectionCode.Under),
+            MarketType.Handicap => (SelectionCode.Home, SelectionCode.Away),
+            _ => throw new ArgumentException("Market type is not supported for demargin.", nameof(market))
+        };
+
+        var first = GetSelection(market, firstCode);
+        var second = GetSelection(market, secondCode);
+
+        var firstImpliedProbability = first.Odds.ToProbability().Value;
+        var secondImpliedProbability = second.Odds.ToProbability().Value;
 
         var impliedProbabilitySum = firstImpliedProbability + secondImpliedProbability;
 
@@ -160,6 +147,28 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
         return (
             First: new Probability(firstImpliedProbability / impliedProbabilitySum),
             Second: new Probability(secondImpliedProbability / impliedProbabilitySum));
+    }
+
+    private static Selection GetSelection(
+        MarketWithBase market,
+        SelectionCode code)
+    {
+        Selection? result = null;
+
+        foreach (var selection in market.Selections)
+        {
+            if (selection.Code != code)
+                continue;
+
+            if (result is not null)
+                throw new ArgumentException($"Selection {code} is duplicated.", nameof(market));
+
+            result = selection;
+        }
+
+        return result ?? throw new ArgumentException(
+            $"Selection {code} was not found.",
+            nameof(market));
     }
 
     /// <summary>
@@ -177,13 +186,13 @@ public sealed class LambdaPairCalculator : ILambdaPairCalculator
         var threshold = (int)Math.Floor(-handicapBase.Value) + 1;
         var probability = 0d;
 
-        for (var homeScore = 0; homeScore <= _maxScore; homeScore++)
+        for (var homeScore = 0; homeScore <= PricingMathConstants.MaxScore; homeScore++)
         {
             var homeScoreProbability = PoissonProbabilityCalculator
                 .Exact(homeScore, homeLambda)
                 .Value;
 
-            for (var awayScore = 0; awayScore <= _maxScore; awayScore++)
+            for (var awayScore = 0; awayScore <= PricingMathConstants.MaxScore; awayScore++)
             {
                 if (homeScore - awayScore < threshold)
                     continue;
